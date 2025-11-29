@@ -111,6 +111,47 @@ try {
   firebaseError = e.message;
 }
 // --- SHARED COMPONENTS (Memoized) ---
+const MoozaLogo = React.memo(({ className = "w-12 h-12", variant = "filled" }) => {
+  // Unique ID to prevent conflicts if multiple logos are on screen
+  const maskId = React.useId(); 
+  
+  return (
+    <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Background Layer: Only show if variant is 'filled' */}
+      {variant === 'filled' && (
+        <rect width="512" height="512" rx="100" fill="#0F172A"/>
+      )}
+
+      {/* GESTALT LOGO GROUP */}
+      <g transform="translate(256 256) scale(2.2)">
+        <defs>
+          <mask id={maskId}>
+            {/* Visible area (White = Opaque) */}
+            <rect x="-100" y="-100" width="200" height="200" fill="white"/>
+            {/* Cutouts (Black = Transparent) */}
+            <circle cx="0" cy="0" r="55" fill="black"/>
+            <path d="M-40 -35 L-50 -65 L-20 -45 Z" fill="black"/> {/* Left Ear */}
+            <path d="M40 -35 L50 -65 L20 -45 Z" fill="black"/>   {/* Right Ear */}
+          </mask>
+        </defs>
+
+        {/* The Green Token Circle */}
+        <circle cx="0" cy="0" r="90" fill="#4ADE80" mask={`url(#${maskId})`}/>
+        
+        {/* Floating Snout */}
+        <ellipse cx="0" cy="10" rx="18" ry="12" fill="#22C55E"/> 
+        <circle cx="-6" cy="10" r="3" fill="#052e16"/>
+        <circle cx="6" cy="10" r="3" fill="#052e16"/>
+        
+        {/* Floating Eyes */}
+        <circle cx="-20" cy="-10" r="4" fill="#22C55E"/>
+        <circle cx="20" cy="-10" r="4" fill="#22C55E"/>
+      </g>
+    </svg>
+  );
+});
+MoozaLogo.displayName = 'MoozaLogo';
+
 const Button = React.memo(
   ({
     children,
@@ -218,7 +259,7 @@ const RulesView = React.memo(({ setView }) => {
     { 
       icon: <ShieldCheck className="w-5 h-5 text-blue-600" />, 
       title: "2. Verification", 
-      desc: "Admins review proof. Approved = 1 Token. Rejected? Check your profile for the specific reason." 
+      desc: "Admins review proof. Approved = 1 Token. Rejected? Check your profile for the reason." 
     },
     { 
       icon: <RefreshCw className="w-5 h-5 text-purple-600" />, 
@@ -228,51 +269,80 @@ const RulesView = React.memo(({ setView }) => {
     { 
       icon: <Trophy className="w-5 h-5 text-amber-500" />, 
       title: "4. Win Prizes", 
-      desc: "Use tickets to enter. Winners are selected randomly by the system and announced on the card." 
+      desc: "Use tickets to enter. Winners are selected randomly by the system." 
     },
   ];
 
   return (
-    <div className="max-w-md mx-auto bg-slate-50 min-h-screen shadow-2xl overflow-y-auto relative font-sans text-slate-800 pb-24">
-       <div className="bg-emerald-600 pt-4 pb-2 px-6 flex items-center gap-3 text-white">
-        <button
-          onClick={() => setView('dashboard')}
-          className="p-2 hover:bg-emerald-700 rounded-full transition-colors"
-          title="Back to Dashboard"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-      </div>
-       <div className="bg-emerald-600 pt-2 pb-8 px-6 rounded-b-3xl text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <BookOpen size={128} />
+    <div className="max-w-md mx-auto bg-slate-50 min-h-screen relative font-sans text-slate-800 pb-28">
+       
+       {/* --- HEADER: Matches Dashboard Branding --- */}
+       <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-800 pt-12 pb-24 px-6 rounded-b-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+          {/* Watermark Logo */}
+          <div className="absolute top-0 right-0 p-4 opacity-10 mix-blend-overlay transform rotate-12 scale-150 pointer-events-none">
+             <MoozaLogo className="w-64 h-64" variant="transparent" />
           </div>
-          <div className="relative z-10">
-            <h1 className="text-2xl font-bold mb-2">How it Works</h1>
-            <p className="text-emerald-100 text-sm">Follow these simple steps to earn rewards.</p>
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+
+          <div className="relative z-10 flex items-center gap-4 mb-4">
+             {/* Back Button: Glass Style */}
+             <button
+               onClick={() => setView('dashboard')}
+               className="bg-white/20 backdrop-blur-md p-2.5 rounded-xl text-white hover:bg-white/30 transition-all border border-white/10 shadow-lg group"
+             >
+               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+             </button>
+             
+             <div>
+               <h1 className="text-2xl font-black tracking-tight leading-none">How it Works</h1>
+               <p className="text-emerald-100 text-xs font-medium opacity-90">Follow the steps</p>
+             </div>
           </div>
        </div>
-       <div className="p-6 space-y-4 -mt-4 relative z-10">
+
+       {/* --- CONTENT CARDS: Overlapping Header --- */}
+       <div className="px-6 -mt-16 relative z-10 space-y-4">
           {steps.map((s, i) => (
-            <Card key={i} className="flex items-start gap-4 p-4 shadow-md border-none">
-               <div className="bg-slate-100 p-3 rounded-full flex-shrink-0">{s.icon}</div>
+            <div key={i} className="bg-white rounded-2xl p-4 shadow-lg border border-slate-100 flex items-start gap-4 animate-in slide-in-from-bottom-4" style={{ animationDelay: `${i * 100}ms` }}>
+               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-inner flex-shrink-0">
+                  {s.icon}
+               </div>
                <div>
                  <h3 className="font-bold text-slate-800">{s.title}</h3>
-                 <p className="text-sm text-slate-500 leading-relaxed mt-1">{s.desc}</p>
+                 <p className="text-xs text-slate-500 leading-relaxed mt-1 font-medium">{s.desc}</p>
                </div>
-            </Card>
+            </div>
           ))}
-          <div className="mt-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-            <h4 className="font-bold text-indigo-900 text-sm mb-2 flex items-center gap-2">
-              <BookOpen className="w-4 h-4" /> Rules
+          
+          {/* Rules Details Box */}
+          <div className="mt-6 p-5 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-xl shadow-sm">
+            <h4 className="font-bold text-indigo-900 text-sm mb-3 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" /> Game Rules
             </h4>
-            <ul className="text-xs text-indigo-800 space-y-2 list-disc list-inside opacity-80">
+            <ul className="text-xs text-indigo-800 space-y-2 list-disc list-inside font-medium opacity-80">
               <li>Only PET plastic bottles are accepted.</li>
               <li>Bottles must be empty and crushed.</li>
               <li>One bottle per video clip.</li>
               <li>Fake submissions will result in a ban.</li>
-              <li><strong>Pro Tip:</strong> Enter multiple times to increase your chances!</li>
             </ul>
+          </div>
+       </div>
+
+       {/* --- FLOATING NAVIGATION: Keeps the "App" feel --- */}
+       <div className="fixed bottom-6 left-6 right-6 z-40">
+          <div className="bg-slate-900/90 backdrop-blur-lg rounded-2xl p-2 flex justify-between items-center shadow-2xl border border-slate-700/50 text-slate-400">
+            <button className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl hover:text-white hover:bg-white/5 transition-all" onClick={() => setView('dashboard')}>
+              <Store className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Home</span>
+            </button>
+            <button className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-900/20 translate-y-[-4px] transition-all" onClick={() => setView('rules')}>
+              <BookOpen className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Rules</span>
+            </button>
+            <button className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl hover:text-white hover:bg-white/5 transition-all" onClick={() => setView('draw')}>
+              <Ticket className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Rewards</span>
+            </button>
           </div>
        </div>
     </div>
@@ -280,8 +350,7 @@ const RulesView = React.memo(({ setView }) => {
 });
 RulesView.displayName = 'RulesView';
 
-// 2. EXCHANGE VIEW
-// Helper Component for "Recent Activity" Items (Only shows if count > 0)
+// LOCATE THIS COMPONENT (usually above ExchangeView) AND REPLACE IT:
 const DrawActivityItem = React.memo(({ draw, userId, onHasEntry, onLoadComplete }) => {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -293,50 +362,55 @@ const DrawActivityItem = React.memo(({ draw, userId, onHasEntry, onLoadComplete 
         const coll = collection(db, 'artifacts', appId, 'public', 'data', 'draws', draw.id, 'entries');
         const q = query(coll, where('userId', '==', userId));
         const snapshot = await getCountFromServer(q);
+        
         if (mounted) {
           const c = snapshot.data().count;
           setCount(c);
-          setLoading(false);
-          if (c > 0) onHasEntry(); // Notify parent that this draw has entries
+          if (c > 0) onHasEntry(); 
         }
       } catch (e) {
         console.error("Activity item error", e);
-        if (mounted) setLoading(false);
       } finally {
-        if (mounted && onLoadComplete) onLoadComplete(); // ISSUE 3 FIX: Notify load complete
+        if (mounted) {
+            setLoading(false);
+            if (onLoadComplete) onLoadComplete();
+        }
       }
     };
     fetchCount();
     return () => { mounted = false; };
   }, [draw.id, userId, onHasEntry, onLoadComplete]);
 
+  // 1. Loading Skeleton (Pulsing)
   if (loading) return (
-    <div className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-xl shadow-sm animate-pulse">
+    <div className="flex justify-between items-center p-4 bg-white/50 border border-slate-100 rounded-2xl shadow-sm animate-pulse mb-3">
         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-200"></div>
-            <div className="h-3 w-24 bg-slate-200 rounded"></div>
+            <div className="w-10 h-10 rounded-full bg-slate-200"></div>
+            <div className="h-4 w-24 bg-slate-200 rounded"></div>
         </div>
         <div className="h-6 w-12 bg-slate-200 rounded"></div>
     </div>
   );
 
-  if (count === 0) return null; // Don't show if no tickets
+  // 2. Hide if no entries (Standard behavior)
+  if (count === 0) return null; 
 
+  // 3. Render Item (Glass/Modern Style)
   return (
-    <div className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
-      <div className="flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-full ${draw.color || 'bg-slate-200'} flex items-center justify-center text-white text-xs`}>
-           <History className="w-4 h-4" />
+    <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md border border-slate-100 animate-in fade-in slide-in-from-bottom-2 mb-3">
+      <div className="flex items-center gap-4">
+        <div className={`w-10 h-10 rounded-full ${draw.color || 'bg-slate-200'} flex items-center justify-center text-white text-xs shadow-sm`}>
+           <History className="w-5 h-5" />
         </div>
         <div>
-          <div className="text-sm font-bold text-slate-700">{draw.title}</div>
-          <div className="text-[10px] text-slate-400">
+          <div className="text-sm font-bold text-slate-800">{draw.title}</div>
+          <div className="text-[10px] text-slate-500 font-medium">
              {draw.status === 'closed' ? 'Closed' : 'Active'} • {new Date(draw.timestamp).toLocaleDateString()}
           </div>
         </div>
       </div>
       
-      <div className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+      <div className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 border border-indigo-100">
         <Tag className="w-3 h-3" /> {count} Ticket{count !== 1 ? 's' : ''}
       </div>
     </div>
@@ -344,14 +418,13 @@ const DrawActivityItem = React.memo(({ draw, userId, onHasEntry, onLoadComplete 
 });
 DrawActivityItem.displayName = 'DrawActivityItem';
 
+// 2. EXCHANGE VIEW
+// Helper Component for "Recent Activity" Items (Only shows if count > 0)
 const ExchangeView = React.memo(({ user, userData, setView }) => {
   const [draws, setDraws] = useState([]);
-  const [showHistory, setShowHistory] = useState(false); // Controls the "Recent Activity" card view
-  const [hasAnyEntries, setHasAnyEntries] = useState(false); // Tracks if we found any entries at all
-  
-  // ISSUE 3 FIX: Track loading state of history items
+  const [showHistory, setShowHistory] = useState(false);
+  const [hasAnyEntries, setHasAnyEntries] = useState(false);
   const [itemsLoaded, setItemsLoaded] = useState(0); 
-  
   const unsubDrawRef = useRef(null);
 
   // Reset loading state when history opens
@@ -373,13 +446,9 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
     );
     unsubDrawRef.current = onSnapshot(q, (snapshot) => {
       setDraws(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-        console.error("Error fetching draws:", error);
-    });
+    }, (error) => console.error("Error fetching draws:", error));
 
-    return () => {
-      if (unsubDrawRef.current) unsubDrawRef.current();
-    };
+    return () => { if (unsubDrawRef.current) unsubDrawRef.current(); };
   }, []);
 
   const handleConvert = useCallback(async () => {
@@ -389,9 +458,7 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
         const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'profile');
         const userDoc = await transaction.get(userRef);
         if (!userDoc.exists()) throw new Error("User profile does not exist!");
-        
-        const currentTokens = userDoc.data().tokens || 0;
-        if (currentTokens < 5) throw new Error("Insufficient verified tokens.");
+        if ((userDoc.data().tokens || 0) < 5) throw new Error("Insufficient verified tokens.");
 
         transaction.update(userRef, {
           tokens: increment(-5),
@@ -399,13 +466,11 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
         });
       });
     } catch (error) {
-      console.error('Conversion error:', error);
       alert(error.message);
     }
   }, [userData.tokens, user.uid]);
 
-  const handleEnterDraw = useCallback(
-    async (draw) => {
+  const handleEnterDraw = useCallback(async (draw) => {
       const cost = draw.ticketCost || 1;
       try {
         await runTransaction(db, async (transaction) => {
@@ -413,14 +478,11 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
           const drawDoc = await transaction.get(drawRef);
           
           if (!drawDoc.exists()) throw new Error('Draw not found');
-          if (drawDoc.data().status === 'closed') {
-             throw new Error('This draw is closed for new entries.');
-          }
+          if (drawDoc.data().status === 'closed') throw new Error('This draw is closed.');
 
           const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'profile');
           const userDoc = await transaction.get(userRef);
           
-          if (!userDoc.exists()) throw new Error('User not found');
           if ((userDoc.data().tickets || 0) < cost) throw new Error('Not enough tickets!');
 
           transaction.update(userRef, { tickets: increment(-cost) });
@@ -435,42 +497,40 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
         });
         alert("Entered successfully! Good luck!");
       } catch (e) {
-        console.error('Draw entry error:', e);
         alert(e.message || 'Entry failed. Try again.');
       }
-    },
-    [user.uid, user.email]
-  );
+    }, [user.uid, user.email]);
 
-  const drawsList = useMemo(
-    () =>
+  const drawsList = useMemo(() =>
       draws.map((draw) => (
-        <div
-          key={draw.id}
-          className={`p-4 rounded-xl border flex flex-col gap-3 transition-all ${draw.status === 'closed' ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100'}`}
-        >
-          <div className="flex justify-between items-center">
+        <div key={draw.id} className={`p-4 rounded-2xl border flex flex-col gap-3 transition-all relative overflow-hidden ${draw.status === 'closed' ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 shadow-md'}`}>
+           {/* Status Badge */}
+           {draw.status === 'closed' && (
+              <div className="absolute top-0 right-0 bg-slate-200 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-bl-xl uppercase tracking-wider">Closed</div>
+           )}
+           
+          <div className="flex justify-between items-center z-10">
             <div className="flex items-center gap-3">
-                <div
-                className={`w-10 h-10 rounded-full ${draw.color || 'bg-blue-500'} flex items-center justify-center text-white shadow-md`}
-                >
-                {draw.status === 'closed' ? <Lock className="w-5 h-5" /> : <Trophy className="w-5 h-5" />}
+                <div className={`w-12 h-12 rounded-2xl ${draw.color || 'bg-blue-500'} flex items-center justify-center text-white shadow-lg`}>
+                   {draw.status === 'closed' ? <Lock className="w-6 h-6" /> : <Trophy className="w-6 h-6" />}
                 </div>
                 <div>
-                <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                    {draw.title}
-                    {draw.status === 'closed' && <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Closed</span>}
-                </div>
-                <div className="text-xs text-slate-400">
-                    {draw.ticketCost || 1} Ticket(s) Required
-                </div>
+                  <div className="font-bold text-slate-800 text-base leading-tight mb-0.5">{draw.title}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium border border-slate-200">
+                       Entry: {draw.ticketCost || 1} Ticket
+                    </span>
+                  </div>
                 </div>
             </div>
             
             {!draw.winnerEmail && (
                 <Button
                     size="small"
-                    variant={draw.status === 'closed' ? 'secondary' : 'secondary'}
+                    // Dynamic styling for the button
+                    className={draw.status === 'closed' 
+                       ? "bg-slate-200 text-slate-400 border-none shadow-none" 
+                       : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"}
                     disabled={userData.tickets < (draw.ticketCost || 1) || draw.status === 'closed'}
                     onClick={() => handleEnterDraw(draw)}
                 >
@@ -479,16 +539,15 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
             )}
           </div>
 
-          {/* Winner Display for Users (Privacy Protected) */}
+          {/* Winner Display */}
           {draw.winnerEmail && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                  <div className="bg-amber-100 p-2 rounded-full text-amber-600">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="bg-amber-100 p-2 rounded-full text-amber-600 shadow-sm">
                       <Trophy className="w-4 h-4" />
                   </div>
                   <div>
                       <div className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Result</div>
                       <div className="text-sm font-bold text-amber-900">
-                        {/* PRIVACY FIX: Only show email if it matches current user, else generic msg */}
                         {user.uid === draw.winnerUserId ? "🎉 YOU WON!" : "Winner Announced"}
                       </div>
                   </div>
@@ -496,40 +555,49 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
           )}
         </div>
       )),
-    [draws, userData.tickets, handleEnterDraw, user.uid] // added user.uid dep
+    [draws, userData.tickets, handleEnterDraw, user.uid]
   );
 
   // --- HISTORY VIEW RENDER ---
   if (showHistory) {
-      // ISSUE 3 FIX: Only show empty state if ALL items have reported back
       const allLoaded = itemsLoaded === draws.length;
-
       return (
-        <div className="max-w-md mx-auto bg-slate-50 min-h-screen shadow-2xl overflow-y-auto relative font-sans text-slate-800 pb-24 animate-in slide-in-from-right">
-            <div className="bg-indigo-600 pt-4 pb-4 px-6 flex items-center gap-3 text-white sticky top-0 z-10 shadow-md">
-                <button onClick={() => setShowHistory(false)} className="p-2 hover:bg-indigo-700 rounded-full transition-colors"><ArrowLeft className="w-6 h-6" /></button>
-                <h2 className="font-bold text-lg">My Entries</h2>
+        <div className="max-w-md mx-auto bg-slate-50 min-h-screen relative font-sans text-slate-800 pb-28 animate-in slide-in-from-right">
+            {/* Header: History specific */}
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 pt-12 pb-16 px-6 rounded-b-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 mix-blend-overlay transform rotate-12 scale-150 pointer-events-none">
+                   <MoozaLogo className="w-64 h-64" variant="transparent" />
+                </div>
+                <div className="relative z-10 flex items-center gap-4">
+                  <button onClick={() => setShowHistory(false)} className="bg-white/20 backdrop-blur-md p-2.5 rounded-xl text-white hover:bg-white/30 transition-all border border-white/10 shadow-lg group">
+                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                  </button>
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight leading-none">My Entries</h1>
+                    <p className="text-indigo-100 text-xs font-medium opacity-90">Ticket history</p>
+                  </div>
+                </div>
             </div>
-            <div className="p-6 space-y-3">
+
+            <div className="px-6 -mt-8 relative z-10 space-y-3">
                 {draws.map(draw => (
                     <DrawActivityItem 
                         key={draw.id} 
                         draw={draw} 
                         userId={user.uid} 
                         onHasEntry={() => setHasAnyEntries(true)} 
-                        onLoadComplete={handleLoadComplete} // Pass callback
+                        onLoadComplete={handleLoadComplete} 
                     />
                 ))}
                 
-                {/* Safe Empty State - Prevents Flashing */}
                 {allLoaded && !hasAnyEntries && (
-                    <div className="text-center py-12 animate-in fade-in">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                    <div className="bg-white rounded-2xl p-8 text-center shadow-lg border border-slate-100">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
                             <Ticket className="w-8 h-8" />
                         </div>
                         <h3 className="text-slate-600 font-bold">No entries yet</h3>
-                        <p className="text-slate-400 text-sm mt-1">Convert tokens to tickets and enter draws to see them here.</p>
-                        <Button variant="secondary" className="mt-6 w-full" onClick={() => setShowHistory(false)}>Browse Draws</Button>
+                        <p className="text-slate-400 text-sm mt-1 mb-6">Convert tokens to tickets and enter draws to see them here.</p>
+                        <Button variant="secondary" className="w-full" onClick={() => setShowHistory(false)}>Browse Draws</Button>
                     </div>
                 )}
             </div>
@@ -539,45 +607,125 @@ const ExchangeView = React.memo(({ user, userData, setView }) => {
 
   // --- MAIN EXCHANGE VIEW RENDER ---
   return (
-    <div className="max-w-md mx-auto bg-slate-50 min-h-screen shadow-2xl overflow-y-auto relative font-sans text-slate-800 pb-24">
-      {/* ... header code ... */}
-      <div className="bg-indigo-600 pt-4 pb-2 px-6 flex items-center gap-3 text-white">
-        <button onClick={() => setView('dashboard')} className="p-2 hover:bg-indigo-700 rounded-full transition-colors"><ArrowLeft className="w-6 h-6" /></button>
-      </div>
-      <div className="bg-indigo-600 pt-4 pb-8 px-6 rounded-b-3xl text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-10"><Ticket size={128} /></div>
-        <div className="relative z-10 flex justify-between items-start mb-4">
-          <div><h1 className="text-2xl font-bold">Exchange</h1><p className="text-sm opacity-90 text-indigo-100">Get tickets</p></div>
-          <div className="flex gap-2">
-            <div className="bg-white/20 backdrop-blur-md rounded-xl p-2 px-3 flex items-center gap-1 border border-white/20 text-sm"><Coins className="w-4 h-4 text-amber-300" /><span className="font-bold">{userData.tokens}</span></div>
-            <div className="bg-white/20 backdrop-blur-md rounded-xl p-2 px-3 flex items-center gap-1 border border-white/20 text-sm"><Ticket className="w-4 h-4 text-purple-300" /><span className="font-bold">{userData.tickets}</span></div>
-          </div>
+    <div className="max-w-md mx-auto bg-slate-50 min-h-screen relative font-sans text-slate-800 pb-28">
+      
+      {/* 1. HEADER: Consistent Emerald Gradient */}
+      <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-800 pt-12 pb-20 px-6 rounded-b-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+        {/* Watermark */}
+        <div className="absolute top-0 right-0 p-4 opacity-10 mix-blend-overlay transform rotate-12 scale-150 pointer-events-none">
+             <MoozaLogo className="w-64 h-64" variant="transparent" />
+        </div>
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+
+        <div className="relative z-10 flex justify-between items-center mb-8">
+           <div className="flex items-center gap-4">
+             <button onClick={() => setView('dashboard')} className="bg-white/20 backdrop-blur-md p-2.5 rounded-xl text-white hover:bg-white/30 transition-all border border-white/10 shadow-lg group">
+                <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+             </button>
+             <div>
+                <h1 className="text-2xl font-black tracking-tight leading-none">Rewards</h1>
+                <p className="text-emerald-100 text-xs font-medium opacity-90">Spend your earnings</p>
+             </div>
+           </div>
+        </div>
+
+        {/* 2. GLASS STATS: Overlapping Cards */}
+        <div className="grid grid-cols-2 gap-4 translate-y-8">
+            {/* TOKENS CARD (Source) */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl flex flex-col justify-between h-28 relative overflow-hidden">
+                <div className="flex items-center gap-2 text-emerald-100 mb-1">
+                    <Coins className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Tokens</span>
+                </div>
+                <div className="text-3xl font-black text-white drop-shadow-sm">{userData.tokens}</div>
+            </div>
+            
+            {/* TICKETS CARD (Destination) */}
+            <div className="bg-gradient-to-br from-indigo-500/80 to-purple-600/80 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl flex flex-col justify-between h-28 relative overflow-hidden">
+                <div className="absolute -right-4 -bottom-4 bg-white/20 w-16 h-16 rounded-full blur-lg"></div>
+                <div className="flex items-center gap-2 text-indigo-100 mb-1 z-10">
+                    <Ticket className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Tickets</span>
+                </div>
+                <div className="text-3xl font-black text-white drop-shadow-sm z-10">{userData.tickets}</div>
+            </div>
         </div>
       </div>
 
-      <div className="px-6 space-y-6 -mt-6 relative z-20">
-        <Card className="border-indigo-100 shadow-indigo-100">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3"><div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600"><RefreshCw className="w-6 h-6" /></div><div><h3 className="font-bold text-slate-800">Token Exchange</h3><p className="text-xs text-slate-500">5 Tokens = 1 Lucky Ticket</p></div></div>
-          </div>
-          <Button variant="exchange" onClick={handleConvert} disabled={userData.tokens < 5} className="w-full">
-            {userData.tokens < 5 ? `Need ${5 - userData.tokens} more tokens` : 'Convert to Ticket'}
-          </Button>
-        </Card>
+      {/* 3. CONTENT AREA */}
+      <div className="px-6 mt-16 space-y-6 relative z-0">
         
-        <div>
-          <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><Gift className="w-4 h-4 text-purple-600" /> Upcoming Draws</h3>
-          <div className="space-y-3">{draws.length === 0 ? (<div className="text-center py-8 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">No draws active yet.</div>) : (drawsList)}</div>
+        {/* EXCHANGE MACHINE CARD */}
+        <div className="bg-white rounded-3xl p-1 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
+           <div className="bg-slate-50 rounded-[1.3rem] p-5 border border-slate-100 relative overflow-hidden">
+              <div className="flex justify-between items-center mb-4">
+                 <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-50">
+                        <RefreshCw className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-slate-800 leading-tight">Token Exchange</h3>
+                        <p className="text-xs text-slate-500">5 Tokens = 1 Lucky Ticket</p>
+                    </div>
+                 </div>
+              </div>
+              
+              <Button 
+                variant="exchange" 
+                onClick={handleConvert} 
+                disabled={userData.tokens < 5} 
+                className={`w-full shadow-lg transition-all active:scale-95 ${userData.tokens < 5 ? 'opacity-50 grayscale' : 'shadow-indigo-200'}`}
+              >
+                {userData.tokens < 5 ? `Need ${5 - userData.tokens} more tokens` : 'Convert to Ticket'}
+              </Button>
+           </div>
         </div>
+        
+        {/* DRAWS LIST */}
+        <div>
+          <div className="flex justify-between items-end mb-3 px-1">
+             <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <Gift className="w-4 h-4 text-purple-600" /> Active Draws
+             </h3>
+             {/* Recent Activity Text Button */}
+             <button 
+                onClick={() => { setHasAnyEntries(false); setShowHistory(true); }}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+             >
+                <History className="w-3 h-3" /> History
+             </button>
+          </div>
 
-        {/* RECENT ACTIVITY BUTTON (Gap #1 Fix) */}
-        <div className="pt-2">
-             <Button variant="history" onClick={() => { setHasAnyEntries(false); setShowHistory(true); }} className="w-full flex justify-between items-center group">
-                <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-slate-500" /> Recent Activity</span>
-                <ChevronDown className="w-4 h-4 text-slate-400 -rotate-90 group-active:rotate-0 transition-transform" />
-             </Button>
+          <div className="space-y-3">
+             {draws.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 text-sm bg-white rounded-2xl border border-dashed border-slate-200">
+                   No draws active right now.
+                </div>
+             ) : (
+                drawsList
+             )}
+          </div>
         </div>
       </div>
+      
+      {/* 4. FLOATING NAVIGATION */}
+      <div className="fixed bottom-6 left-6 right-6 z-40">
+        <div className="bg-slate-900/90 backdrop-blur-lg rounded-2xl p-2 flex justify-between items-center shadow-2xl border border-slate-700/50 text-slate-400">
+          <button className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl hover:text-white hover:bg-white/5 transition-all" onClick={() => setView('dashboard')}>
+            <Store className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Home</span>
+          </button>
+          <button className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl hover:text-white hover:bg-white/5 transition-all" onClick={() => setView('rules')}>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Rules</span>
+          </button>
+          <button className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl bg-purple-500 text-white shadow-lg shadow-purple-900/20 translate-y-[-4px] transition-all" onClick={() => setView('draw')}>
+            <Ticket className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Rewards</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 });
@@ -1154,17 +1302,42 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-600 to-teal-800 flex flex-col items-center justify-center p-6">
-        <div className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"><Video className="w-10 h-10 text-emerald-600" /></div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Mooza.Recycle</h1><p className="text-slate-500 mb-8 text-sm">Recycle plastic, earn cash.</p>
-          <div className="space-y-3">
-            <Button variant="google" onClick={handleGoogleLogin} className="w-full">
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-              Continue with Google
-            </Button>
-            <div className="relative py-2"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"></span></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">Or</span></div></div>
-            <Button variant="secondary" onClick={handleGuestLogin} className="w-full">Try as Guest</Button>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Background Ambient Glow */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-900/20 to-slate-900 z-0"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
+
+        <div className="w-full max-w-sm relative z-10 flex flex-col items-center text-center">
+          {/* NEW LOGO IMPLEMENTATION [cite: 1] */}
+          <div className="mb-8 shadow-2xl shadow-emerald-500/20 rounded-[2rem]">
+             <MoozaLogo className="w-32 h-32 rounded-[2rem]" variant="filled" />
+          </div>
+          
+          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Mooza<span className="text-emerald-400">.Recycle</span></h1>
+          <p className="text-slate-400 mb-10 text-lg">Turn plastic into prizes.</p>
+          
+          <div className="space-y-4 w-full px-4">
+          <Button 
+  variant="admin" // Changed from 'google' to 'admin' for dark background
+  onClick={handleGoogleLogin} 
+  className="w-full border border-slate-700 font-bold hover:bg-slate-700 hover:border-emerald-500/50 transition-all mb-4"
+>
+  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+  Continue with Google
+</Button>
+            
+            <div className="relative py-4">
+               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-700"></span></div>
+               <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-900 px-2 text-slate-500 font-medium">Or</span></div>
+            </div>
+            
+            <Button 
+  variant="admin"  // CHANGE: 'secondary' -> 'admin' (This fixes the background color)
+  onClick={handleGuestLogin} 
+  className="w-full border border-slate-700 font-bold hover:bg-slate-700 hover:border-emerald-500/50 transition-all"
+>
+   Try as Guest
+</Button>
           </div>
         </div>
       </div>
@@ -1178,48 +1351,163 @@ export default function App() {
   if (view === 'draw') return <ExchangeView user={user} userData={userData} setView={setView} />;
   if (view === 'rules') return <RulesView setView={setView} />;
 
+  // REPLACE THE FINAL return (...) BLOCK IN YOUR App FUNCTION WITH THIS:
   return (
     <ErrorBoundary>
-      <div className="max-w-md mx-auto bg-slate-50 min-h-screen shadow-2xl overflow-y-auto relative font-sans text-slate-800 pb-24">
-        <div className="bg-emerald-600 pt-8 pb-12 px-6 rounded-b-3xl text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10"><Video className="w-32 h-32" /></div>
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-6">
-              <div><h1 className="text-2xl font-bold">Mooza.Recycle</h1><p className="text-emerald-100 text-sm">Welcome, {user.isAnonymous ? 'Guest' : user.email?.split('@')[0]}</p></div>
-              <div className="flex gap-2">
-                {user.uid === OWNER_UID && <button onClick={() => setIsAdminMode(true)} className="bg-emerald-800/40 p-2 rounded-full text-emerald-100 hover:bg-emerald-800/60"><ShieldCheck className="w-4 h-4" /></button>}
-                <button onClick={handleLogout} className="bg-emerald-800/40 p-2 rounded-full text-emerald-100 hover:bg-emerald-800/60"><LogOut className="w-4 h-4" /></button>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20"><div className="flex items-center gap-2 text-emerald-100 mb-1"><Store className="w-4 h-4" /><span className="text-xs font-medium uppercase">Pending</span></div><div className="text-3xl font-bold text-amber-300">{userData.pendingTokens}</div></div>
-              <div className="bg-white rounded-2xl p-4 border border-white/20 text-emerald-900 shadow-lg"><div className="flex items-center gap-2 text-emerald-600 mb-1"><Coins className="w-4 h-4" /><span className="text-xs font-bold uppercase">Verified</span></div><div className="text-3xl font-bold">{userData.tokens}</div></div>
-            </div>
-          </div>
-        </div>
+      <div className="max-w-md mx-auto bg-slate-50 min-h-screen relative font-sans text-slate-800 pb-28">
+        
+        {/* --- NEW HEADER WITH LOGO --- */}
+        {/* --- UPDATED HEADER: Matches Login Branding --- */}
+<div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-800 pt-12 pb-20 px-6 rounded-b-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+  
+  {/* Background Decor: Keep this transparent so it acts as a subtle watermark */}
+  <div className="absolute top-0 right-0 p-4 opacity-10 mix-blend-overlay transform rotate-12 scale-150 pointer-events-none">
+     <MoozaLogo className="w-64 h-64" variant="transparent" />
+  </div>
+  <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
 
-        {userData.lastRejection && (
-          <div className="px-6 -mt-4 mb-2 relative z-20 animate-in slide-in-from-top">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" /><div className="flex-1"><h3 className="text-sm font-bold text-red-800">Rejected</h3><p className="text-xs text-red-600">{userData.lastRejection}</p></div><button onClick={dismissRejection} className="text-red-400 hover:text-red-600"><X className="w-5 h-5" /></button>
-            </div>
-          </div>
-        )}
-
-        <div className="px-6 relative z-20 mt-[-1.5rem]">
-          <Card className="flex flex-col items-center justify-center text-center py-8 border-2 border-dashed border-emerald-300 bg-emerald-50/50">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600"><Video className="w-8 h-8" /></div>
-            <h3 className="font-bold text-slate-800 text-lg">Record Recycling</h3>
-            <p className="text-sm text-slate-500 mb-4">Crush it, capture it on video, and claim your token! Trade tokens for tickets and win rewards. <strong>(Only PET bottles)</strong></p>
-            <Button className="w-full max-w-xs" onClick={() => setView('upload')}>Open Camera</Button>
-          </Card>
+  <div className="relative z-10">
+    <div className="flex justify-between items-center mb-8">
+      
+      {/* BRANDING SECTION */}
+      <div className="flex items-center gap-3">
+        {/* LOGO: Changed to 'filled' to match Login screen (Dark Slate Box) */}
+        <div className="shadow-lg rounded-[1rem] overflow-hidden"> 
+           <MoozaLogo className="w-12 h-12" variant="filled" />
         </div>
         
-        <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-40 pb-6">
-          <button className={`flex flex-col items-center gap-1 ${view === 'dashboard' ? 'text-emerald-600' : 'text-slate-400'} hover:opacity-80`} onClick={() => setView('dashboard')}><Store className="w-6 h-6" /><span className="text-[10px] font-medium">Home</span></button>
-          <button className={`flex flex-col items-center gap-1 ${view === 'rules' ? 'text-emerald-600' : 'text-slate-400'} hover:opacity-80`} onClick={() => setView('rules')}><BookOpen className="w-6 h-6" /><span className="text-[10px] font-medium">Rules</span></button>
-          <button className={`flex flex-col items-center gap-1 ${view === 'draw' ? 'text-emerald-600' : 'text-slate-400'} hover:opacity-80`} onClick={() => setView('draw')}><Ticket className="w-6 h-6" /><span className="text-[10px] font-medium">Rewards</span></button>
+        <div>
+          {/* TITLE: Matches Login font and 'dot' styling */}
+          <h1 className="text-2xl font-black tracking-tight leading-none text-white">
+            Mooza<span className="text-emerald-200">.Recycle</span>
+          </h1>
+          {/* CAPTION: Matches Login text */}
+          <p className="text-emerald-100 text-xs font-medium opacity-90">Turn plastic into prizes.</p>
         </div>
+      </div>
+      
+      {/* Controls (Admin/Logout) - Unchanged */}
+      <div className="flex gap-2">
+        {user.uid === OWNER_UID && (
+          <button onClick={() => setIsAdminMode(true)} className="bg-white/20 backdrop-blur-md p-2.5 rounded-xl text-white hover:bg-white/30 transition-all border border-white/10 shadow-lg">
+            <ShieldCheck className="w-5 h-5" />
+          </button>
+        )}
+        <button onClick={handleLogout} className="bg-white/20 backdrop-blur-md p-2.5 rounded-xl text-white hover:bg-white/30 transition-all border border-white/10 shadow-lg">
+          <LogOut className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+
+    {/* Glass Stats Cards (Unchanged) */}
+    <div className="grid grid-cols-2 gap-4 translate-y-8">
+      {/* Pending Card */}
+      <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl flex flex-col justify-between h-32 relative overflow-hidden group">
+        <div className="absolute -right-4 -top-4 bg-white/10 w-20 h-20 rounded-full blur-xl group-hover:bg-white/20 transition-all"></div>
+        <div className="flex items-center gap-2 text-emerald-100 mb-1 z-10">
+          <Loader2 className="w-4 h-4 animate-spin-slow" />
+          <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
+        </div>
+        <div className="z-10">
+          <div className="text-4xl font-black text-white drop-shadow-sm">{userData.pendingTokens}</div>
+          <div className="text-[10px] text-emerald-200 mt-1">Video in review</div>
+        </div>
+      </div>
+
+      {/* Verified Card */}
+      <div className="bg-white rounded-2xl p-4 border border-emerald-100 shadow-xl flex flex-col justify-between h-32 relative overflow-hidden group">
+        <div className="absolute -right-4 -bottom-4 bg-emerald-50 w-24 h-24 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
+        <div className="flex items-center gap-2 text-emerald-600 mb-1 z-10">
+          <Coins className="w-4 h-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">Balance</span>
+        </div>
+        <div className="z-10">
+          <div className="text-4xl font-black text-emerald-800">{userData.tokens}</div>
+          <div className="text-[10px] text-emerald-600/70 mt-1 font-medium">Tokens</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        {/* --- BODY CONTENT --- */}
+        <div className="px-6 mt-16 space-y-6 relative z-0">
+          
+          {/* Rejection Notice */}
+          {userData.lastRejection && (
+            <div className="bg-red-50 border-l-4 border-red-500 rounded-r-xl p-4 flex items-start gap-4 shadow-sm animate-in slide-in-from-top-4">
+              <div className="bg-red-100 p-2 rounded-full text-red-600">
+                 <XCircle className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-red-900">Submission Rejected</h3>
+                <p className="text-xs text-red-700 mt-1 leading-relaxed">{userData.lastRejection}</p>
+              </div>
+              <button onClick={dismissRejection} className="text-red-400 hover:text-red-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* New "Record Recycling" Card */}
+          <div className="bg-white rounded-3xl p-1 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
+             <div className="bg-slate-50 rounded-[1.3rem] p-6 border border-slate-100 flex flex-col items-center text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+                
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-md text-emerald-600 border-4 border-emerald-50 relative group cursor-pointer" onClick={() => setView('upload')}>
+                   <Video className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" />
+                   <div className="absolute inset-0 rounded-full border border-emerald-100 animate-ping opacity-20"></div>
+                </div>
+                
+                <h3 className="font-black text-slate-800 text-xl mb-2">Recycle & Earn</h3>
+                <p className="text-sm text-slate-500 mb-6 max-w-[240px] leading-relaxed">
+                  Crush a PET bottle, record a video, and get paid in tokens.
+                </p>
+                
+                <Button 
+                  className="w-full shadow-emerald-200 shadow-lg transform active:scale-95 transition-all" 
+                  onClick={() => setView('upload')}
+                >
+                  <Camera className="w-5 h-5" /> Start Recording
+                </Button>
+             </div>
+          </div>
+        </div>
+        
+        {/* --- FLOATING NAVIGATION (UPDATED) --- */}
+<div className="fixed bottom-6 left-6 right-6 z-40">
+  <div className="bg-slate-900/90 backdrop-blur-lg rounded-2xl p-2 flex justify-between items-center shadow-2xl border border-slate-700/50 text-slate-400">
+    
+    {/* HOME BUTTON */}
+    <button 
+      className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-300 ${view === 'dashboard' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/20 translate-y-[-4px]' : 'hover:text-white hover:bg-white/5'}`} 
+      onClick={() => setView('dashboard')}
+    >
+      <Store className="w-5 h-5" />
+      {/* Logic removed: Text is always rendered now */}
+      <span className="text-[10px] font-bold">Home</span>
+    </button>
+    
+    {/* RULES BUTTON */}
+    <button 
+      className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-300 ${view === 'rules' ? 'bg-blue-500 text-white shadow-lg shadow-blue-900/20 translate-y-[-4px]' : 'hover:text-white hover:bg-white/5'}`} 
+      onClick={() => setView('rules')}
+    >
+      <BookOpen className="w-5 h-5" />
+      <span className="text-[10px] font-bold">Rules</span>
+    </button>
+    
+    {/* REWARDS BUTTON */}
+    <button 
+      className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-300 ${view === 'draw' ? 'bg-purple-500 text-white shadow-lg shadow-purple-900/20 translate-y-[-4px]' : 'hover:text-white hover:bg-white/5'}`} 
+      onClick={() => setView('draw')}
+    >
+      <Ticket className="w-5 h-5" />
+      <span className="text-[10px] font-bold">Rewards</span>
+    </button>
+  </div>
+</div>
+
       </div>
     </ErrorBoundary>
   );
